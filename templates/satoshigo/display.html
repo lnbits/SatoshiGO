@@ -1,0 +1,400 @@
+{% extends "public.html" %} {% from "macros.jinja" import window_vars with
+context %}{% block page %}
+<div class="row q-col-gutter-md justify-center">
+
+  <div class="col-12 col-sm-6 col-md-5 col-lg-4">
+    <q-card-section>
+      <q-card class="q-pa-lg">
+        <div
+          id="mapContainer"
+          style="height: 400px; width: 100%; margin-top: 50px"
+        >
+          <q-tooltip
+            content-class="bg-orange"
+            color="orange"
+            content-style="font-size: 16px"
+            anchor="top middle"
+            self="center middle"
+            :offset="[10, 10]"
+          >
+            {% raw %}{{selectTooltip}}
+          </q-tooltip>
+        </div>
+        <div class="row q-pt-md">
+          
+            <small>
+              Top-left corner: lat {{ tplat }} , lon {{ tplng }} <br />
+              Bottom-right corner: lat {{ btlat }} , lon {{ btlng }} <br />
+            </small>
+              <div class="col-10"> <strong style="font-size: 20px"
+                >Amount in game: <b v-text="totalFunds + fundsCollected"></b> sats</strong
+              >
+           
+          </div>
+          <div class="col-2">
+            <q-btn
+              unelevated
+              rounded
+              color="orange"
+              label="Share"
+              @click="copyText(getTheUrl, 'Link copied to clipboard!')"
+            />
+          </div>
+        </div>
+
+        {% endraw %}
+      </q-card>
+    </q-card-section>
+  </div>
+  <div class="col-12 col-sm-6 col-md-5 col-lg-4 q-gutter-y-md">
+    <q-card-section>
+      <q-card class="q-pa-lg q-pt-xl lnbits__dialog-card">
+        <img src="/satoshigo/static/funding.png" style="width: 100%" />
+        <q-form @submit="makePayment" class="q-gutter-md">
+          <q-input
+            filled
+            dense
+            type="number"
+            v-model="payDialog.data.sats"
+            label="amount of sats *"
+          ></q-input>
+          <div class="row q-mt-lg">
+            <q-btn unelevated color="orange" type="submit">Fund map</q-btn>
+          </div>
+        </q-form>
+      </q-card>
+    </q-card-section>
+  </div>
+  <q-dialog
+    v-model="payDialog.show"
+    persistent
+    transition-show="scale"
+    position="top"
+    @hide="closepayDialog"
+  >
+    <q-card class="q-pa-lg q-pt-xl" style="width: 500px">
+      <q-card-section class="q-pa-none">
+        <div class="text-center">
+          <a :href="'lightning://' + this.payDialog.data.req">
+            <q-responsive :ratio="1" class="q-mx-md">
+              <qrcode
+                :value="this.payDialog.data.req"
+                :options="{width: 800}"
+                class="rounded-borders"
+              ></qrcode>
+            </q-responsive>
+          </a>
+        </div>
+        <div class="row q-mt-lg">
+          <q-btn outline color="grey" @click="copyReq">Copy invoice</q-btn>
+        </div>
+      </q-card-section>
+    </q-card>
+  </q-dialog>
+</div>
+</div>
+{% endblock %} {% block scripts %}
+
+<link
+  rel="stylesheet"
+  href="/satoshigo/static/js/leafletsats.css"
+  crossorigin=""
+/>
+
+<script src="/satoshigo/static/js/leafletsats.js" crossorigin=""></script>
+
+<style>
+  .leaflet-control-attribution {
+    display: none;
+  }
+</style>
+<script>
+  Vue.component(VueQrcode.name, VueQrcode)
+
+  new Vue({
+    el: '#vue',
+    mixins: [windowMixin],
+    data: function () {
+      return {
+        totalFunds: parseInt('{{ totalFunds }}'),
+        fundsCollected: parseInt('{{ fundsCollected }}'),
+        here: location.protocol + '//' + location.host,
+        payDialog: {
+          show: false,
+          data: {
+            req: '',
+            game_id: '',
+            top_left: 'slush fortune raw problem',
+            bottom_right: 'slush edit ticket allow',
+            sats: 100
+          }
+        },
+        center: [51.505, -0.09],
+        tplat: 0,
+        tplng: 0,
+        btlat: 0,
+        btlng: 0,
+        mapTooltip: 'Select top-left corner',
+        tp1: true,
+        polygon: {},
+        mapDiv: {},
+        game_id: '{{game_id}}'
+      }
+    },
+    computed: {
+      selectTooltip: function () {
+        return this.mapTooltip
+      },
+      selectTop: function () {
+        return [this.tplat, this.tplng]
+      },
+      selectBot: function () {
+        return [this.btlat, this.btlng]
+      },
+      getTheUrl: function () {
+        return window.location.href
+      }
+    },
+    methods: {
+      copyReq: function () {
+        this.copyText(this.payDialog.data.req)
+      },
+      getInvoice: function () {
+        var self = this
+        self.payDialog.data.sats = parseInt(self.payDialog.data.sats)
+        var data = self.payDialog.data
+        data.tplat = parseFloat(self.tplat)
+        data.tplon = parseFloat(self.tplng)
+        data.btlat = parseFloat(self.btlat)
+        data.btlon = parseFloat(self.btlng)
+        data.game_id = self.game_id
+        
+        self.$q.notify({
+          spinner: true,
+          message: 'Please wait...',
+          timeout: 2000
+        })
+        LNbits.api
+          .request('POST', '/satoshigo/api/v1/funding/', 'whatevs', data)
+          .then(function (response) {
+            
+            self.payDialog.data.req = response.data[1]
+            self.payDialog.show = true
+            var interv = setInterval(function () {
+              LNbits.api
+                .request(
+                  'GET',
+                  '/satoshigo/api/v1/funding/' +
+                    response.data[0].satoshigo_id +
+                    '/' +
+                    response.data[0].payment_hash,
+                  'whatevs'
+                )
+                .then(function (response) {
+                  
+                  if (response.data.paid == true) {
+                    self.$q.notify({
+                      type: 'positive',
+                      message: `Funded, thanks!!!`
+                    })
+                    self.payDialog.show = false
+                    self.totalFunds =
+                      parseInt(self.totalFunds) +
+                      parseInt(self.payDialog.data.sats)
+                    clearInterval(interv)
+                  }
+                })
+                .catch(function (error) {
+                  clearInterval(self.checker)
+                  LNbits.utils.notifyApiError(error)
+                })
+            }, 3000)
+          })
+          .catch(function (error) {
+            clearInterval(self.checker)
+            LNbits.utils.notifyApiError(error)
+          })
+      },
+      makePayment: function () {
+        var self = this
+        self.getInvoice()
+      },
+      closepayDialog: function () {
+        var self = this
+        self.payDialog.show = false
+        self.payDialog.data = {}
+      },
+      firstCorner: function (lat, lng) {
+        this.insertParam('tplat', lat, 'tplng', lng)
+      },
+      secondCorner: function (lat, lng) {
+        this.insertParam('btlat', lat, 'btlng', lng)
+      },
+      getUrlVars: function () {
+        var vars = {}
+        var parts = window.location.href.replace(
+          /[?&]+([^=&]+)=([^&]*)/gi,
+          function (m, key, value) {
+            vars[key] = value
+          }
+        )
+        return vars
+      },
+
+      insertParam: function (key1, value1, key2, value2) {
+        self = this
+        key1 = encodeURIComponent(key1)
+        value1 = encodeURIComponent(value1)
+        key2 = encodeURIComponent(key2)
+        value2 = encodeURIComponent(value2)
+
+        var tplat = self.getUrlVars()['tplat']
+        var tplng = self.getUrlVars()['tplng']
+        var btlat = self.getUrlVars()['btlat']
+        var btlng = self.getUrlVars()['btlng']
+        window.history.pushState({path: refresh}, '', refresh)
+
+        if (btlat && key1 == 'tplat') {
+          var refresh =
+            window.location.protocol +
+            '//' +
+            window.location.host +
+            window.location.pathname +
+            '?btlat=' +
+            encodeURIComponent(btlat) +
+            '&btlng=' +
+            encodeURIComponent(btlng) +
+            '&' +
+            key1 +
+            '=' +
+            value1 +
+            '&' +
+            key2 +
+            '=' +
+            value2
+        } else if (tplat && key1 == 'btlat') {
+          var refresh =
+            window.location.protocol +
+            '//' +
+            window.location.host +
+            window.location.pathname +
+            '?tplat=' +
+            encodeURIComponent(tplat) +
+            '&tplng=' +
+            encodeURIComponent(tplng) +
+            '&' +
+            key1 +
+            '=' +
+            value1 +
+            '&' +
+            key2 +
+            '=' +
+            value2
+        } else {
+          var refresh =
+            window.location.protocol +
+            '//' +
+            window.location.host +
+            window.location.pathname +
+            '?' +
+            key1 +
+            '=' +
+            value1 +
+            '&' +
+            key2 +
+            '=' +
+            value2
+        }
+
+        window.history.pushState({path: refresh}, '', refresh)
+      },
+      mapSquare: function () {
+        self.mapDiv.removeLayer(self.polygon)
+        self.polygon = L.polygon([
+          [self.selectTop[0], self.selectTop[1]],
+          [self.selectTop[0], self.selectBot[1]],
+
+          [self.selectBot[0], self.selectBot[1]],
+          [self.selectBot[0], self.selectTop[1]]
+        ]).addTo(self.mapDiv)
+      },
+      startMap: function () {
+        self = this
+        if ((self.tplat, self.tplng, self.btlat, self.btlng)) {
+         
+          self.mapDiv = L.map('mapContainer').setView(
+            [
+              (parseFloat(self.tplat) + parseFloat(self.btlat)) / 2,
+              (parseFloat(self.tplng) + parseFloat(self.btlng)) / 2
+            ],
+            10
+          )
+        } else {
+          self.mapDiv = L.map('mapContainer').setView(self.center, 10)
+        }
+      },
+      setupLeafletMap: function () {
+        self = this
+        self.startMap()
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution:
+            'Map data (c) <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery (c) <a href="https://www.mapbox.com/">Mapbox</a>',
+          maxZoom: 18,
+          id: 'mapbox/streets-v11'
+        }).addTo(self.mapDiv)
+
+        var popup = L.popup()
+        function tester() {
+        }
+
+        function onMapClick(e) {
+          if (self.tp1) {
+            self.tplat = e.latlng.lat
+            self.tplng = e.latlng.lng
+            self.tp1 = !self.tp1
+            self.mapTooltip = 'Click to select bottom-right corner'
+            self.firstCorner(e.latlng.lat, e.latlng.lng)
+          } else {
+            self.btlat = e.latlng.lat
+            self.btlng = e.latlng.lng
+            self.tp1 = !self.tp1
+            self.mapTooltip = 'Click to select top-left corner'
+            self.secondCorner(e.latlng.lat, e.latlng.lng)
+            self.mapSquare()
+          }
+        }
+
+        self.mapDiv.on('click', onMapClick)
+      }
+    },
+    mounted() {
+      self = this
+      self.setupLeafletMap()
+      if ((self.tplat, self.tplng, self.btlat, self.btlng)) {
+        self.mapSquare()
+        setTimeout(function () {
+          self.mapDiv.fitBounds(self.polygon.getBounds())
+        }, 500)
+      }
+    },
+    created() {
+      self = this
+      function getUrlVars() {
+        var vars = {}
+        var parts = window.location.href.replace(
+          /[?&]+([^=&]+)=([^&]*)/gi,
+          function (m, key, value) {
+            vars[key] = value
+          }
+        )
+        return vars
+      }
+      self.tplat = getUrlVars()['tplat']
+      self.tplng = getUrlVars()['tplng']
+      self.btlat = getUrlVars()['btlat']
+      self.btlng = getUrlVars()['btlng']
+    }
+  })
+</script>
+
+{% endblock %}

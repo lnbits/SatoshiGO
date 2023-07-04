@@ -1,0 +1,233 @@
+<q-expansion-item
+  group="extras"
+  icon="swap_vertical_circle"
+  label="API info"
+  :content-inset-level="0.5"
+>
+  <q-expansion-item
+    group="api"
+    dense
+    expand-separator
+    label="List satoshigo games"
+  >
+    <q-card>
+      <q-card-section>
+        <code><span class="text-blue">GET</span> /satoshigo/api/v1/games</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;invoice_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Body (application/json)</h5>
+        <h5 class="text-caption q-mt-sm q-mb-none">
+          Returns 200 OK (application/json)
+        </h5>
+        <code>[&lt;satoshigo_game_object&gt;, ...]</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X GET {{ request.url_root }}api/v1/games -H "X-Api-Key: {{
+          g.user.wallets[0].inkey }}"
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+  <q-expansion-item
+    group="api"
+    dense
+    expand-separator
+    label="Get a satoshigo game"
+  >
+    <q-card>
+      <q-card-section>
+        <code
+          ><span class="text-blue">GET</span>
+          /satoshigo/api/v1/games/&lt;satoshigo_id&gt;</code
+        >
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;invoice_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Body (application/json)</h5>
+        <h5 class="text-caption q-mt-sm q-mb-none">
+          Returns 201 CREATED (application/json)
+        </h5>
+        <code>{"lnurl": &lt;string&gt;}</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X GET {{ request.url_root }}api/v1/games/&lt;satoshigo_id&gt;
+          -H "X-Api-Key: {{ g.user.wallets[0].inkey }}"
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+  <q-expansion-item
+    group="api"
+    dense
+    expand-separator
+    label="Create a satoshigo game"
+  >
+    <q-card>
+      <q-card-section>
+        <code
+          ><span class="text-green">POST</span> /satoshigo/api/v1/games</code
+        >
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;admin_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Body (application/json)</h5>
+        <code
+          >{"title": &lt;string&gt;, "min_satoshigoable": &lt;integer&gt;,
+          "max_satoshigoable": &lt;integer&gt;, "uses": &lt;integer&gt;,
+          "wait_time": &lt;integer&gt;, "is_unique": &lt;boolean&gt;}</code
+        >
+        <h5 class="text-caption q-mt-sm q-mb-none">
+          Returns 201 CREATED (application/json)
+        </h5>
+        <code>{"lnurl": &lt;string&gt;}</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X POST {{ request.url_root }}api/v1/games -d '{"title":
+          &lt;string&gt;, "min_satoshigoable": &lt;integer&gt;,
+          "max_satoshigoable": &lt;integer&gt;, "uses": &lt;integer&gt;,
+          "wait_time": &lt;integer&gt;, "is_unique": &lt;boolean&gt;}' -H
+          "Content-type: application/json" -H "X-Api-Key: {{
+          g.user.wallets[0].adminkey }}"
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+  <q-expansion-item
+    group="api"
+    dense
+    expand-separator
+    label="Update a satoshigo game"
+  >
+    <q-card>
+      <q-card-section>
+        <code
+          ><span class="text-green">PUT</span>
+          /satoshigo/api/v1/games/&lt;satoshigo_id&gt;</code
+        >
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;admin_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Body (application/json)</h5>
+        <code
+          >{"title": &lt;string&gt;, "min_satoshigoable": &lt;integer&gt;,
+          "max_satoshigoable": &lt;integer&gt;, "uses": &lt;integer&gt;,
+          "wait_time": &lt;integer&gt;, "is_unique": &lt;boolean&gt;}</code
+        >
+        <h5 class="text-caption q-mt-sm q-mb-none">
+          Returns 200 OK (application/json)
+        </h5>
+        <code>{"lnurl": &lt;string&gt;}</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X PUT {{ request.url_root }}api/v1/games/&lt;satoshigo_id&gt;
+          -d '{"title": &lt;string&gt;, "min_satoshigoable": &lt;integer&gt;,
+          "max_satoshigoable": &lt;integer&gt;, "uses": &lt;integer&gt;,
+          "wait_time": &lt;integer&gt;, "is_unique": &lt;boolean&gt;}' -H
+          "Content-type: application/json" -H "X-Api-Key: {{
+          g.user.wallets[0].adminkey }}"
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+  <q-expansion-item
+    group="api"
+    dense
+    expand-separator
+    label="Delete a satoshigo game"
+  >
+    <q-card>
+      <q-card-section>
+        <code
+          ><span class="text-pink">DELETE</span>
+          /satoshigo/api/v1/games/&lt;satoshigo_id&gt;</code
+        >
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;admin_key&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Returns 204 NO CONTENT</h5>
+        <code></code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X DELETE {{ request.url_root
+          }}api/v1/games/&lt;satoshigo_id&gt; -H "X-Api-Key: {{
+          g.user.wallets[0].adminkey }}"
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+  <q-expansion-item
+    group="api"
+    dense
+    expand-separator
+    label="Create player and player wallet"
+  >
+    <q-card>
+      <q-card-section>
+        <code
+          ><span class="text-light-green">POST</span>
+          /satoshigo/api/v1/players</code
+        >
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code
+          >{"X-Api-Key": &lt;string&gt;, "Content-type":
+          "application/json"}</code
+        >
+        <code>{"user_name": &lt;string&gt;}</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">
+          Returns 201 CREATED (application/json)
+        </h5>
+        <code
+          >{"id": &lt;string&gt;, "user_name": &lt;string&gt;, "adminkey":
+          &lt;string&gt;, "inkey": &lt;string&gt;}</code
+        >
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X POST {{ request.url_root }}api/v1/players -d '{"user_name":
+          &lt;string&gt;}' -H "Content-type: application/json"
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+  <q-expansion-item group="api" dense expand-separator label="Register player">
+    <q-card>
+      <q-card-section>
+        <code
+          ><span class="text-blue">POST</span>
+          /satoshigo/api/v1/games/&lt;game_id&gt;/enter</code
+        >
+
+        <h5 class="text-caption q-mt-sm q-mb-none">Body (application/json)</h5>
+        <h5 class="text-caption q-mt-sm q-mb-none">
+          Returns 201 CREATED (application/json)
+        </h5>
+        <code
+          >{game_id: &lt;string&gt;, inkey: &lt;string&gt;, time:
+          &lt;string&gt;, user_name: &lt;string&gt;}</code
+        >
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X POST {{ request.url_root }}api/v1/games/&lt;game_id&gt;/enter
+          -d '{"inkey": &lt;string&gt;}' -H "Content-type: application/json"
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+  <q-expansion-item group="api" dense expand-separator label="Get players">
+    <q-card>
+      <q-card-section>
+        <code
+          ><span class="text-blue">GET</span>
+          /satoshigo/api/v1/games/players</code
+        >
+        <h5 class="text-caption q-mt-sm q-mb-none">Headers</h5>
+        <code>{"X-Api-Key": &lt;inkey&gt;}</code><br />
+        <h5 class="text-caption q-mt-sm q-mb-none">Body (application/json)</h5>
+        <h5 class="text-caption q-mt-sm q-mb-none">
+          Returns 201 CREATED (application/json)
+        </h5>
+        <code>[{array of players}]</code>
+        <h5 class="text-caption q-mt-sm q-mb-none">Curl example</h5>
+        <code
+          >curl -X GET {{ request.url_root }}api/v1/games/players -H "X-Api-Key:
+          {{ g.user.wallets[0].inkey }}"
+        </code>
+      </q-card-section>
+    </q-card>
+  </q-expansion-item>
+</q-expansion-item>
